@@ -1,0 +1,325 @@
+#-- Sonic Pi Set v1
+#-- meta {"current":4,"zooms":[2,2,2,2,2,2,2,2,2,2]}
+#-- buffer 0
+# Coded by Sam Aaron
+
+with_fx :reverb, mix: 0.25 do
+  live_loop :oceans do
+    s = synth [:cnoise, :cnoise, :gnoise].choose, amp: rrand(0.5, 1.5), attack: rrand(0, 1), sustain: rrand(0, 2), release: rrand(1, 5), cutoff_slide: rrand(0, 5), cutoff: rrand(60, 100), pan: rrand(-1, 1), pan_slide: rrand(1, 5), amp: rrand(0.5, 1)
+    control s, pan: rrand(-1, 1), cutoff: rrand(20, 30)
+    sleep rrand(2, 4)
+  end
+end
+
+#-- buffer 1
+# Coded by Darin Wilson
+#
+# The piece consists of three long loops, each of which
+# plays one of two randomly selected pitches. Each note
+# has different attack, release and sleep values, so that
+# they move in and out of phase with each other. This can
+# play for quite awhile without repeating itself :)
+
+use_synth :hollow
+use_tuning :just
+scale 50, :bhairav
+with_fx :reverb, mix: 0.7 do
+  
+  live_loop :note1 do
+    play choose([:D4,:F4]), attack: 6, release: 6
+    sleep 8
+  end
+  
+  live_loop :note2 do
+    play choose([:Fs4,:G4]), attack: 4, release: 5
+    sleep 10
+  end
+  
+  live_loop :note3 do
+    play choose([:A4, :Cs5]), attack: 5, release: 5
+    sleep 11
+  end
+  
+end
+
+#-- buffer 2
+
+# Reverb and low-pass filtering simulate outdoor atmospheric density
+with_fx :reverb, room: 0.85, mix: 0.08, damp: 0.5 do
+  
+  # --------------------------------------------------
+  # 1. DENSE RAIN WALL (Continuous Heavy Downpour)
+  # --------------------------------------------------
+  live_loop :rain_wall do
+    use_synth :bnoise
+    
+    # Dual-filter stack shapes white noise into a roaring wall of water
+    with_fx :lpf, cutoff: rrand(75, 90) do
+      with_fx :hpf, cutoff: 35 do
+        play :c3, attack: 0.5, sustain: 2, release: 0.5, amp: rrand(1.8, 2.4)
+      end
+    end
+    sleep 2.5
+  end
+  
+  # --------------------------------------------------
+  # 2. DROP IMPACTS (Heavy Drops Striking Surfaces)
+  # --------------------------------------------------
+  live_loop :heavy_drops do
+    use_synth :sine
+    
+    # Fast micro-bursts of pitch-dropping sine waves mimic distinct drops
+    8.times do
+      drop_pitch = rrand(60, 85)
+      
+      node = play drop_pitch,
+        attack: 0.001,
+        release: rrand(0.02, 0.05),
+        amp: rrand(0.4, 0.9),
+        pan: rrand(-0.8, 0.8)
+      
+      # Rapid downward pitch-bend simulates liquid impact
+      control node, note: drop_pitch - 12, note_slide: 0.01
+      
+      sleep [0.0625, 0.125, 0.1875].choose
+    end
+  end
+  
+  # --------------------------------------------------
+  # 3. HIGH SPLASH & SPRAY (Misting Noise Layer)
+  # --------------------------------------------------
+  live_loop :splash_spray do
+    use_synth :cnoise
+    
+    # High-pass filter isolates the crisp, sizzle quality of heavy splashing
+    with_fx :hpf, cutoff: 85 do
+      play :c4, attack: 0.2, sustain: 1, release: 0.3, amp: rrand(0.5, 0.9)
+    end
+    sleep 1.25
+  end
+  
+  # --------------------------------------------------
+  # 4. WATER SURGES (Dynamic Downpour Swells)
+  # --------------------------------------------------
+  live_loop :rain_surge do
+    # Periodic swells simulate sudden torrential bursts
+    sleep rrand(4, 8)
+    
+    use_synth :cnoise
+    surge_time = rrand(2, 4)
+    
+    with_fx :lpf, cutoff: rrand(80, 105) do
+      play :c2, attack: surge_time * 0.5, release: surge_time * 0.5, amp: rrand(1.2, 2.0)
+    end
+  end
+  
+end
+#-- buffer 3
+use_bpm 60
+
+# Master FX for spatial depth and reverberation
+with_fx :reverb, room: 0.9, mix: 0.13, damp: 0.6 do
+  
+  # --------------------------------------------------
+  # 1. WIND (Evolving Bandpass Pink Noise)
+  # --------------------------------------------------
+  live_loop :wind do
+    use_synth :cnoise
+    
+    wind_duration = rrand(6, 12)
+    cutoff_center = rrand(40, 75)
+    
+    # Smooth filter sweeps simulate rising and falling gusts
+    with_fx :bpf, centre: cutoff_center, res: 0.8 do |f|
+      node = play :c3, attack: wind_duration * 0.4, release: wind_duration * 0.6, amp: rrand(1.2, 2.2)
+      
+      # Modulate filter center during the gust
+      control f, centre: cutoff_center + rrand(-15, 15), centre_slide: wind_duration * 0.5
+      sleep wind_duration
+    end
+  end
+  
+  # --------------------------------------------------
+  # 2. RAIN (Continuous Filtered White Noise)
+  # --------------------------------------------------
+  live_loop :rain do
+    use_synth :bnoise
+    
+    # Low-pass filter removes harsh highs to mimic steady downpour
+    with_fx :lpf, cutoff: rrand(65, 80) do
+      play :c2, attack: 1, release: 3, amp: rrand(0.6, 1.8)
+    end
+    sleep 3
+  end
+  
+  # --------------------------------------------------
+  # 3. THUNDER (Sub-Bass Boom & Low-Frequency Noise)
+  # --------------------------------------------------
+  live_loop :thunder do
+    # Thunder occurs at irregular intervals
+    sleep rrand(8, 20)
+    
+    # Sharp initial impact followed by low rumble
+    with_fx :distortion, distort: 0.138 do
+      with_fx :lpf, cutoff: rrand(40, 60) do
+        # Sub-bass punch for physical impact
+        use_synth :subpulse
+        play :c1, attack: 0.05, decay: 0.5, sustain: 1, release: 4, amp: 2.5
+        
+        # Heavy noise body for rolling thunder tail
+        use_synth :noise
+        play :c2, attack: 0.1, decay: 1, sustain: 2, release: 5, amp: 3.0
+      end
+    end
+  end
+  
+  # --------------------------------------------------
+  # 4. LIGHTNING "CRACK" (High-Frequency Impact)
+  # --------------------------------------------------
+  live_loop :lightning_crack do
+    # Syncs occasionally with thunder, but with random timing offset
+    sleep rrand(12, 25)
+    
+    with_fx :hpf, cutoff: 90 do
+      use_synth :noise
+      play :c5, attack: 0.01, release: 0.15, amp: rrand(1.5, 2.5)
+    end
+    
+    # Delayed rumble following the crack
+    sleep rrand(0.2, 0.6)
+    use_synth :subpulse
+    play :e1, attack: 0.1, release: 3, amp: 2.0
+  end
+  
+end
+#-- buffer 4
+# Set global reverb and delay to simulate underwater reverberation
+with_fx :reverb, mix: 0.28, room: 0.9 do
+  with_fx :echo, phase: 0.75, decay: 8, mix: 0.5 do
+    
+    live_loop :whale_song do
+      use_synth :saw
+      
+      # Pick random whale-like pitches (low register, wide intervals)
+      start_note = [:c2, :eb2, :f2, :g2, :bb2, :c3].choose
+      end_note   = [:c2, :eb2, :f2, :g2, :bb2, :c3].choose
+      
+      # Randomize call duration and glide timing
+      duration = rrand(3, 7)
+      
+      # Filter sweep to mimic sound traveling through deep water
+      with_fx :lpf, cutoff: rrand(50, 85) do
+        
+        # Trigger the initial note
+        node = play start_note,
+          attack: duration * 0.3,
+          decay: 0,
+          sustain: duration * 0.4,
+          release: duration * 0.3,
+          amp: 1.5
+        
+        # Smoothly slide pitch mid-note (the signature whale "cry")
+        control node, note: end_note, note_slide: duration * 0.6
+        
+      end
+      
+      # Natural pause between whale calls
+      sleep duration + rrand(1, 4)
+    end
+    
+  end
+end
+#-- buffer 5
+use_bpm 60
+
+# Atmospheric environment (spooky spatial echo)
+with_fx :reverb, room: 0.9, mix: 0.75 do
+  with_fx :echo, phase: 0.375, decay: 4, mix: 0.45 do
+    
+    # --------------------------------------------------
+    # 1. MAIN WITCH CACKLE (Formant-Filtered Vocal Bends)
+    # --------------------------------------------------
+    live_loop :witch_cackle do
+      # Random pauses between full cackling fits
+      sleep rrand(3, 8)
+      
+      use_synth :saw
+      
+      # Vocal-like bandpass filter modulation
+      with_fx :bpf, centre: rrand(75, 95), res: 0.85 do |f|
+        
+        # Rapid staccato bursts ("Heh-heh-heh-heh")
+        cackle_length = [5, 7, 9, 12].choose
+        cackle_length.times do |i|
+          
+          # Cackles start high and slide down erratically
+          base_note = :g4 + [0, 3, 6, 9, 12].choose
+          
+          node = play base_note,
+            attack: 0.01,
+            decay: 0.08,
+            sustain: 0.02,
+            release: 0.05,
+            amp: rrand(1.2, 2.2),
+            pan: rrand(-0.7, 0.7)
+          
+          # Upward or downward pitch bend per "laugh"
+          control node, note: base_note + rrand(-5, 5), note_slide: 0.04
+          
+          # Laughs speed up toward the end of the burst
+          sleep [0.1, 0.125, 0.15].choose * (1.0 - (i.to_f / cackle_length * 0.4))
+        end
+        
+        # Long tail-end howl at the end of the cackle
+        howl_note = :g5
+        node = play howl_note, attack: 0.05, release: 1.2, amp: 2.0
+        control node, note: howl_note - 14, note_slide: 0.8
+        
+      end
+    end
+    
+    # --------------------------------------------------
+    # 2. HIGH SHRIEK / SCREECH (Piercing Layer)
+    # --------------------------------------------------
+    live_loop :witch_shriek do
+      sleep rrand(6, 14)
+      
+      use_synth :dsaw
+      with_fx :hpf, cutoff: 90 do
+        shriek_note = [:c6, :eb6, :fs6, :a6].choose
+        
+        node = play shriek_note, attack: 0.02, sustain: 0.3, release: 0.6, amp: 1.5
+        control node, note: shriek_note - 8, note_slide: 0.4
+      end
+    end
+    
+    # --------------------------------------------------
+    # 3. BUBBLING CAULDRON (Low Resonant Fluid Texture)
+    # --------------------------------------------------
+    live_loop :cauldron_bubbles do
+      use_synth :sine
+      
+      # Micro-pops with pitch drops simulate bubbling liquid
+      16.times do
+        pop_note = rrand(48, 72)
+        node = play pop_note, attack: 0.001, release: 0.03, amp: rrand(0.3, 0.8), pan: rrand(-0.4, 0.4)
+        control node, note: pop_note + 12, note_slide: 0.01
+        sleep [0.0625, 0.125, 0.1875].choose
+      end
+    end
+    
+    # --------------------------------------------------
+    # 4. EERIE WIND GUSTS (Atmospheric Backdrop)
+    # --------------------------------------------------
+    live_loop :spooky_wind do
+      use_synth :gnoise
+      wind_time = rrand(4, 8)
+      
+      with_fx :bpf, centre: rrand(50, 70), res: 0.9 do
+        play :c3, attack: wind_time * 0.5, release: wind_time * 0.5, amp: rrand(0.8, 1.4)
+      end
+      sleep wind_time
+    end
+    
+  end
+end

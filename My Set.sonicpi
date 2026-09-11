@@ -1,0 +1,84 @@
+#-- Sonic Pi Set v1
+#-- meta {"current":3,"zooms":[2,2,2,2,2,2,2,2,2,2]}
+#-- buffer 0
+# Coded by Sam Aaron
+use_tuning :just
+scale 50, :saba
+
+with_fx :reverb, mix: 0.7 do
+  live_loop :haunted do
+    sample :perc_bell, rate: rrand(-1.5, 1.5)
+    sleep rrand(0.1, 2)
+  end
+end
+
+#-- buffer 1
+# Coded by Darin Wilson
+#
+# The piece consists of three long loops, each of which
+# plays one of two randomly selected pitches. Each note
+# has different attack, release and sleep values, so that
+# they move in and out of phase with each other. This can
+# play for quite awhile without repeating itself :)
+use_synth :blade
+use_tuning :just
+scale 50, :saba
+
+with_fx :reverb, mix: 0.7 do
+  live_loop :note1 do
+    play choose([:D4,:E4]), attack: 0.9, release: 6
+    sleep 8
+  end
+  
+  live_loop :note2 do
+    play choose([:Fs4,:G4]), attack: 0.5, release: 5
+    sleep 10
+  end
+  
+  live_loop :note3 do
+    play choose([:A4, :Cs5]), attack: 0.9, release: 5
+    sleep 11
+  end
+  
+end
+
+#-- buffer 2
+# Coded by Sam Aaron
+
+with_fx :reverb, mix: 0.25 do
+  live_loop :oceans do
+    s = synth [:bnoise, :cnoise, :gnoise].choose, amp: rrand(0.5, 1.5), attack: rrand(0, 4), sustain: rrand(0, 2), release: rrand(1, 5), cutoff_slide: rrand(0, 5), cutoff: rrand(60, 100), pan: rrand(-1, 1), pan_slide: rrand(1, 5), amp: rrand(0.5, 1)
+    control s, pan: rrand(-1, 1), cutoff: rrand(20, 100)
+    sleep rrand(2, 4)
+  end
+end
+
+#-- buffer 3
+use_synth :hollow
+use_random_seed 3
+use_debug false
+use_tuning :just
+scale 50, :saba
+
+with_fx :reverb do
+  with_fx(:echo, delay: 0.5, decay: 4) do
+    live_loop :echoes
+      play chord([:b1, :b2, :e1, :e2, :b3, :e3].choose, :minor).choose, cutoff: rrand(40, 100), amp: 0.5, attack: 0, release: rrand(1, 100), cutoff_max: 110
+      sleep [0.25, 0.5, 0.5, 0.5, 1, 1].choose
+    end
+  end
+end
+
+#-- buffer 4
+# Coded by Sam Aaron
+
+use_synth :bnoise
+use_tuning :just
+scale 50, :saba
+
+live_loop :sci_fi do
+  p = play (chord 62, :minor).choose - [0, 12, -12].choose, divisor: 0.01, div_slide: rrand(0, 100), depth: rrand(0.001, 20), attack: 0.01, release: rrand(0, 101), amp: 0.5
+  control p, divisor: rrand(0.001, 5)
+  sleep [0.5, 1, 2].choose
+end
+
