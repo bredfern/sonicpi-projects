@@ -1,0 +1,56 @@
+#-- Sonic Pi Set v1
+#-- meta {"current":4,"zooms":[2,2,2,2,2,2,2,2,2,2]}
+#-- buffer 0
+
+live_loop :hats do
+  sample :drum_cymbal_closed, amp: 0
+  sleep 0.5
+end
+
+
+#-- buffer 1
+
+live_loop :snare do
+  sleep 1
+  sample :sn_dolf, amp: 0
+  sleep 1
+end
+
+
+#-- buffer 2
+
+live_loop :bass do
+  use_synth :tb303
+  play :e1, release: 0.4, cutoff: rrand(40,100), amp: 0
+  sleep 1
+end
+
+
+#-- buffer 3
+
+live_loop :kick do
+  sample :bd_haus, amp: 0
+  sleep 1
+end
+
+
+#-- buffer 4
+
+live_loop :chords do
+  use_synth :prophet
+  c = (chord :e3, :minor)
+  play c, release: 3, cutoff: rrand(20, 130), amp: 0
+  sleep 4
+end
+
+
+#-- buffer 5
+
+live_loop :lead do
+  use_synth :saw
+  n = (scale :e4, :minor_pentatonic).choose
+  play n, release: 0.2, amp: 0.25, cutoff: rrand(10,100)
+  sleep 0.25
+end
+
+

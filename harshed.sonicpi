@@ -1,0 +1,219 @@
+#-- Sonic Pi Set v1
+#-- meta {"current":0,"zooms":[2,2,2,2,2,2,2,2,2,2]}
+#-- buffer 0
+# Coded by Darin Wilson
+#
+# The piece consists of three long loops, each of which
+# plays one of two randomly selected pitches. Each note
+# has different attack, release and sleep values, so that
+# they move in and out of phase with each other. This can
+# play for quite awhile without repeating itself :)
+use_synth :piano
+use_tuning :just
+scale 50, :saba
+
+with_fx :reverb, mix: 0.7 do
+  live_loop :note1 do
+    play choose([:D4,:E4]), attack: 0.9, release: 6
+    sleep 8
+  end
+  
+  live_loop :note2 do
+    play choose([:Fs4,:G4]), attack: 0.5, release: 5
+    sleep 10
+  end
+  
+  live_loop :note3 do
+    play choose([:A4, :Cs5]), attack: 0.9, release: 5
+    sleep 11
+  end
+  
+end
+
+#-- buffer 1
+# Coded by Darin Wilson
+#
+# The piece consists of three long loops, each of which
+# plays one of two randomly selected pitches. Each note
+# has different attack, release and sleep values, so that
+# they move in and out of phase with each other. This can
+# play for quite awhile without repeating itself :)
+use_synth :hollow
+with_fx :reverb, mix: 0.7 do
+  use_tuning :just
+  scale :c4, :jiao
+  
+  live_loop :note1 do
+    play choose([:D4,:E4]), attack: 6, release: 6, amp: 1
+    sleep 8
+  end
+  
+  live_loop :note2 do
+    play choose([:Fs4,:G4]), attack: 4, release: 5, amp: 1
+    sleep 10
+  end
+  
+  live_loop :note3 do
+    play choose([:A4, :Cs5]), attack: 5, release: 5, amp: 0
+    sleep 11
+  end
+  
+end
+
+#-- buffer 2
+# Coded by Sam Aaron
+
+with_fx :reverb, mix: 0.22 do
+  live_loop :oceans do
+    s = synth [:bnoise, :cnoise, :gnoise].choose, amp: rrand(0.2, 0.3), attack: rrand(0, 4), sustain: rrand(0, 2), release: rrand(1, 5), cutoff_slide: rrand(0, 5), cutoff: rrand(60, 100), pan: rrand(-1, 1), pan_slide: rrand(1, 5), amp: rrand(0.5, 1)
+    control s, pan: rrand(-1, 1), cutoff: rrand(60, 110)
+    sleep rrand(2, 4)
+  end
+end
+
+#-- buffer 3
+# Title: Halloween Spooktacular
+# Description: Cauldron, Cackling Witches, Howling Ghosts, Moaning Monsters & Chains
+
+use_bpm 60
+
+# ==============================================================================
+# 1. BUBBLING CAULDRON (Continuous Background)
+# ==============================================================================
+live_loop :cauldron do
+  # Low rumbling fire/brew base
+  use_synth :dark_ambience
+  with_fx :lpf, cutoff: 60 do
+    play :c1, sustain: 2, release: 1, amp: 1.2
+  end
+  
+  # Random liquid bubbles
+  16.times do
+    if one_in(2)
+      use_synth :chipbass
+      with_fx :bpf, centre: rrand(70, 100), res: 0.8 do
+        play rrand(60, 85),
+          attack: 0.005,
+          decay: rrand(0.02, 0.05),
+          sustain: 0,
+          release: 0.01,
+          amp: rrand(0.3, 0.7),
+          pan: rrand(-0.5, 0.5)
+      end
+    end
+    sleep 0.125
+  end
+end
+
+# ==============================================================================
+# 2. CACKLING WITCH (Staccato FM Sweeps & Formants)
+# ==============================================================================
+live_loop :witch, auto_cue: false do
+  sleep rrand(4, 8) # Pauses between cackles
+  
+  cackle_length = rdist(8, 12)
+  base_note = rrand(68, 75)
+  
+  use_synth :mod_fm
+  with_fx :echo, phase: 0.125, decay: 1.5 do
+    with_fx :bpf, centre: 85, res: 0.7 do
+      cackle_length.times do |i|
+        # Pitch jumps higher and faster towards the end of the cackle
+        pitch = base_note + (i * 1.5) + rrand(-2, 2)
+        
+        play pitch,
+          mod_rate: rrand(12, 20),
+          mod_index: 3,
+          attack: 0.01,
+          release: 0.08,
+          amp: 0.8,
+          pan: line(-0.8, 0.8, steps: cackle_length)[i]
+        
+        sleep rrand(0.06, 0.12)
+      end
+    end
+  end
+end
+
+# ==============================================================================
+# 3. HOWLING GHOSTS (Glissando Sine Waves with Reverb)
+# ==============================================================================
+live_loop :ghosts do
+  sleep rrand(2, 5)
+  
+  use_synth :blade
+  with_fx :reverb, room: 0.9, mix: 0.8 do
+    with_fx :pan, pan: rrand(-0.8, 0.8) do
+      # Pitch sweep up and down
+      start_note = rrand(60, 72)
+      target_note = rrand(75, 87)
+      duration = rrand(3, 6)
+      
+      node = play start_note, attack: 1.5, sustain: duration, release: 2, amp: 0.6, vibe_rate: 4
+      
+      # Perform the pitch sweep (glissando)
+      control node, note: target_note, note_slide: duration * 0.6
+      sleep duration * 0.5
+      control node, note: start_note - 5, note_slide: duration * 0.5
+      
+      sleep duration * 0.5 + 2
+    end
+  end
+end
+
+# ==============================================================================
+# 4. MOANING MONSTERS & SHAKING CHAINS
+# ==============================================================================
+live_loop :monster_and_chains do
+  sleep rrand(3, 6)
+  
+  # --- MONSTER MOAN ---
+  in_thread do
+    use_synth :saw
+    with_fx :distortion, distort: 0.4 do
+      with_fx :lpf, cutoff: rrand(40, 55) do
+        moan_note = rrand(30, 38)
+        node = play moan_note, attack: 1.0, sustain: 2.5, release: 1.5, amp: 0.9
+        control node, note: moan_note - 4, note_slide: 3.0
+      end
+    end
+  end
+  # -en-- SHAKING CHAINS ---
+end
+#-- buffer 4
+# Set global reverb and delay to simulate underwater reverberation
+with_fx :reverb, mix: 0.28, room: 0.9 do
+  with_fx :echo, phase: 0.75, decay: 8, mix: 0.25 do
+    
+    live_loop :whale_song do
+      use_synth :dsaw
+      
+      # Pick random whale-like pitches (low register, wide intervals)
+      start_note = [:c2, :eb2, :f2, :g2, :bb2, :c3].choose
+      end_note   = [:c2, :eb2, :f2, :g2, :bb2, :c3].choose
+      
+      # Randomize call duration and glide timing
+      duration = rrand(3, 7)
+      
+      # Filter sweep to mimic sound traveling through deep water
+      with_fx :lpf, cutoff: rrand(50, 85) do
+        
+        # Trigger the initial note
+        node = play start_note,
+          attack: duration * 0.3,
+          decay: 0,
+          sustain: duration * 0.4,
+          release: duration * 0.3,
+          amp: 2.57
+        
+        # Smoothly slide pitch mid-note (the signature whale "cry")
+        control node, note: end_note, note_slide: duration * 0.6
+        
+      end
+      
+      # Natural pause between whale calls
+      sleep duration + rrand(1, 4)
+    end
+    
+  end
+end
