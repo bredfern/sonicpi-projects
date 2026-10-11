@@ -1,0 +1,169 @@
+#-- Sonic Pi Set v1
+#-- meta {"current":1,"zooms":[2,2,2,2,2,2,2,2,2,2]}
+#-- buffer 0
+# Coded by Sam Aaron
+
+live_loop :haunted do
+  sample :ambi_choir, rate: rrand(-1.5, 1.5), amp: 2
+  sleep rrand(1, 2)
+end
+
+#-- buffer 1
+# Coded by Sam Aaron
+
+live_loop :haunted do
+  sample :glitch_robot1, rate: rrand(-1.5, 1.5), amp: 1
+  sleep rrand(1, 6)
+end
+
+#-- buffer 2
+# Conch Trumpet / Horn Sound Synthesis for Sonic Pi
+
+use_tuning :just
+live_loop :conch_trumpet do
+  # Frequency parameters (D2 ~ 146.83 Hz / MIDI note 38)
+  note_num = rrand(38, 60)
+  dur = rrand(3, 6)
+  
+  use_synth_defaults sustain: dur * 0.8, release: dur * 0.2, amp:  rrand(0.1, 1)
+  
+  # Dynamic pitch stabilization & vibrato sub-loop running concurrently
+  in_thread do
+    tick
+    # Pitch bend initialization and vibrato modulation
+    with_fx :tremolo, depth: 0.75, rate: 0.3 do
+      # Oscillator 1: Primary Sawtooth
+      synth :dtri, note: note_num - 0.03, cutoff: 85, note_slide: 0.4
+      
+      # Oscillator 2: Detuned Sawtooth for thickness
+      synth :pnoise, note: note_num + 0.03, cutoff: 85, note_slide: 0.4
+      
+      # Oscillator 3: Narrow Pulse for reed/conch resonance
+      synth :dpulse, note: note_num, pulse_width: 0.45, cutoff: 80, amp: 2, note_slide: 0.4
+    end
+  end
+  
+  # Low-pass filter automation mimicking the horn enclosure
+  with_fx :lpf, cutoff: rrand(10, 100), cutoff_slide: dur do |f|
+    control f, cutoff: 70
+  end
+  
+  # Warm room reverb matching natural shell acoustic
+  with_fx :reverb, room: 0.6, mix: 0.8 do
+    sleep dur + 0.5
+  end
+end
+#-- buffer 3
+# Coded by Sam Aaron
+
+live_loop :haunted do
+  sample :tabla_ke1, rate: rrand(-1.5, 1.5), amp: 2
+  sleep rrand(0.1, 0.5)
+end
+#-- buffer 4
+# Set global reverb and delay to simulate underwater reverberation
+use_tuning :just
+with_fx :reverb, mix: 0.8, room: 0.9 do
+  with_fx :echo, phase: 0.75, decay: 8, mix: 0.9 do
+    
+    live_loop :whale_song do
+      use_synth :hollow
+      
+      # Pick random whale-like pitches (low register, wide intervals)
+      start_note = [:c2, :eb2, :f2, :g2, :bb2, :c3].choose
+      end_note   = [:c2, :eb2, :f2, :g2, :bb2, :c3].choose
+      
+      # Randomize call duration and glide timing
+      duration = rrand(3, 7)
+      
+      # Filter sweep to mimic sound traveling through deep water
+      with_fx :lpf, cutoff: rrand(50, 85) do
+        
+        # Trigger the initial note
+        node = play start_note,
+          attack: duration * 0.3,
+          decay: 0,
+          sustain: duration * 0.4,
+          release: duration * 0.3,
+          amp: rrand(1, 4)
+        
+        # Smoothly slide pitch mid-note (the signature whale "cry")
+        control node, note: end_note, note_slide: duration * 0.6
+        
+      end
+      
+      # Natural pause between whale calls
+      sleep duration + rrand(1, 4)
+    end
+    
+  end
+end
+#-- buffer 5
+# Coded by Sam Aaron
+
+with_fx :reverb, mix: rrand(0.1, 0.9) do
+  live_loop :oceans do
+    s = synth [:pnoise, :cnoise, :gnoise].choose, amp: rrand(1,3), attack: rrand(0, 4), sustain: rrand(0, 2), release: rrand(1, 5), cutoff_slide: rrand(0, 5), cutoff: rrand(60, 100), pan: rrand(-1, 1), pan_slide: rrand(1, 5), amp:  rrand(1, 3)
+    control s, pan: rrand(-1, 1), cutoff: rrand(20, 100)
+    sleep rrand(2, 4)
+  end
+end
+
+#-- buffer 6
+
+# Master FX for spatial depth and reverberation
+with_fx :reverb, room: 0.9, mix: 0.7, damp: 0.6 do
+  
+  # --------------------------------------------------
+  # 1. WIND (Evolving Bandpass Pink Noise)
+  # --------------------------------------------------
+  live_loop :wind do
+    use_synth :pnoise
+    
+    wind_duration = rrand(6, 12)
+    cutoff_center = rrand(40, 75)
+    
+    # Smooth filter sweeps simulate rising and falling gusts
+    with_fx :bpf, centre: cutoff_center, res: 0.8 do |f|
+      node = play :c3, attack: wind_duration * 0.4, release: wind_duration * 0.6, amp: 1.7
+      
+      # Modulate filter center during the gust
+      control f, centre: cutoff_center + rrand(-15, 15), centre_slide: wind_duration * 0.5
+      sleep wind_duration
+    end
+  end
+  
+  # --------------------------------------------------
+  # 2. RAIN (Continuous Filtered White Noise)
+  # --------------------------------------------------
+  live_loop :rain do
+    use_synth :chipnoise
+    
+    # Low-pass filter removes harsh highs to mimic steady downpour
+    with_fx :lpf, cutoff: rrand(65, 80) do
+      play :c2, attack: 1, release: 3, amp: 0.6
+    end
+    sleep 3
+  end
+  
+  # --------------------------------------------------
+  # 3. THUNDER (Sub-Bass Boom & Low-Frequency Noise)
+  # --------------------------------------------------
+  live_loop :thunder do
+    # Thunder occurs at irregular intervals
+    sleep rrand(8, 20)
+    
+    # Sharp initial impact followed by low rumble
+    with_fx :distortion, distort: 0.3 do
+      with_fx :lpf, cutoff: rrand(40, 60) do
+        # Sub-bass punch for physical impact
+        use_synth :subpulse
+        play :c1, attack: 0.05, decay: 0.5, sustain: 1, release: 4, amp: 0.8
+        
+        # Heavy noise body for rolling thunder tail
+        use_synth :noise
+        play :c2, attack: 0.1, decay: 1, sustain: 2, release: 5, amp: 1
+      end
+    end
+  end
+end

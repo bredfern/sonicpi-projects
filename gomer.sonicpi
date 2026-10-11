@@ -1,0 +1,195 @@
+#-- Sonic Pi Set v1
+#-- meta {"current":1,"zooms":[2,2,2,2,2,2,2,2,2,2]}
+#-- buffer 0
+# Coded by Sam Aaron
+use_tuning :just
+use_random_seed 120
+
+live_loop :haunted do
+  sample :ambi_choir, amp: 0, rate: rrand(-2.5, 2.5)
+  sleep rrand(0.25, 4)
+end
+
+#-- buffer 1
+# Coded by Sam Aaron
+
+load_samples(sample_names :ambi)
+sleep 2
+
+with_fx :reverb, mix: 0.56 do
+  live_loop :foo do
+    # try changing the sp_ vars..
+    sp_name = choose sample_names :ambi
+    # sp_name = choose sample_names :drum
+    sp_time = [1, 2].choose
+    #sp_time = 0.5
+    sp_rate = 1
+    #sp_rate = 4
+    
+    s = sample sp_name, cutoff: rrand(70, 130), rate: sp_rate * choose([0.5, 1]), pan: rrand(-1, 1), pan_slide: sp_time
+    control s, pan: rrand(-1, 1)
+    sleep sp_time
+  end
+end
+
+#-- buffer 2
+# Conch Trumpet / Horn Sound Synthesis for Sonic Pi
+use_tuning :just
+
+live_loop :conch_trumpet do
+  # Frequency parameters (D2 ~ 146.83 Hz / MIDI note 38)
+  note_num = rrand(40, 63)
+  dur = 12
+  
+  use_synth_defaults sustain: dur * 0.8, release: dur * 0.5, amp: 1
+  
+  # Dynamic pitch stabilization & vibrato sub-loop running concurrently
+  in_thread do
+    tick
+    # Pitch bend initialization and vibrato modulation
+    with_fx :tremolo, depth: rrand(0.25, 1), rate: 35 do
+      # Oscillator 1: Primary Sawtooth
+      synth :saw, note: note_num - 0.03, cutoff: rrand(10, 85), note_slide: 0.4
+      
+      # Oscillator 2: Detuned Sawtooth for thickness
+      synth :supersaw, note: note_num + 0.03, cutoff: rrand(20,85), note_slide: 0.4
+      
+      # Oscillator 3: Narrow Pulse for reed/conch resonance
+      synth :pulse, note: note_num, pulse_width: 0.45, cutoff: rrand(20, 80), note_slide: 0.4
+    end
+  end
+  
+  # Low-pass filter automation mimicking the horn enclosure
+  with_fx :lpf, cutoff: rrand(20, 88), cutoff_slide: dur do |f|
+    control f, cutoff: rrand(20, 70)
+  end
+  
+  # Warm room reverb matching natural shell acoustic
+  with_fx :reverb, room: 0.86, mix: 0 do
+    sleep dur + 0.5
+  end
+end
+#-- buffer 3
+# Coded by Sam Aaron
+load_sample :drum_heavy_kick
+in_thread do
+  live_loop :drums do
+    sample :bd_mehackit, amp: 0
+    sleep 1
+  end
+  
+  live_loop :snare do
+    sample :sn_dolf, amp: 0
+    sleep 1
+    play 30
+    sleep 1
+    play 30
+  end
+  
+  live_loop :hats do
+    sample :hat_snap, amp: 0
+    play 37
+    sleep 0.6
+  end
+  
+  live_loop :ohats do
+    sample :hat_zild, amp: 0
+    sleep 3
+    play 37
+  end
+end
+#-- buffer 4
+# Coded by Sam Aaron
+load_sample :drum_heavy_kick
+in_thread do
+  live_loop :tun do
+    sample :tabla_re, amp: 0
+    sleep rrand(0.25, 4)
+  end
+  
+  live_loop :te do
+    sample :tabla_te1, amp: 0
+    sleep rrand(0.25, 4)
+    play 30
+  end
+  
+  live_loop :ke do
+    sample :tabla_ke3, amp: 0
+    sleep 1
+    play 37
+    sleep rrand(0.25, 1)
+  end
+end
+#-- buffer 5
+use_bpm 20
+
+# Reverb and low-pass filtering simulate outdoor atmospheric density
+with_fx :reverb, room: 0.85, mix: 0, damp: 0.5 do
+  
+  # --------------------------------------------------
+  # 1. DENSE RAIN WALL (Continuous Heavy Downpour)
+  # --------------------------------------------------
+  live_loop :rain_wall do
+    use_synth :bnoise
+    
+    # Dual-filter stack shapes white noise into a roaring wall of water
+    with_fx :lpf, cutoff: rrand(75, 90) do
+      with_fx :hpf, cutoff: 35 do
+        play :c3, attack: 0.5, sustain: 2, release: 0.5, amp: 0 #rrand(1.8, 2.4)
+      end
+    end
+    sleep 2.5
+  end
+  
+  # --------------------------------------------------
+  # 2. DROP IMPACTS (Heavy Drops Striking Surfaces)
+  # --------------------------------------------------
+  live_loop :heavy_drops do
+    use_synth :sine
+    
+    # Fast micro-bursts of pitch-dropping sine waves mimic distinct drops
+    8.times do
+      drop_pitch = rrand(60, 85)
+      
+      node = play drop_pitch,
+        attack: 0.001,
+        release: rrand(0.02, 0.05),
+        amp: 0, #rrand(0.4, 0.9)
+        pan: rrand(-0.8, 0.8)
+      
+      # Rapid downward pitch-bend simulates liquid impact
+      control node, note: drop_pitch - 12, note_slide: 0.01
+      
+      sleep [0.0625, 0.125, 0.1875].choose
+    end
+  end
+  
+  # --------------------------------------------------
+  # 3. HIGH SPLASH & SPRAY (Misting Noise Layer)
+  # --------------------------------------------------
+  live_loop :splash_spray do
+    use_synth :cnoise
+    
+    # High-pass filter isolates the crisp, sizzle quality of heavy splashing
+    with_fx :hpf, cutoff: 85 do
+      play :c4, attack: 0.2, sustain: 1, release: 0.3, amp: 0 #rrand(0.5, 0.9)
+    end
+    sleep 1.25
+  end
+  
+  # --------------------------------------------------
+  # 4. WATER SURGES (Dynamic Downpour Swells)
+  # --------------------------------------------------
+  live_loop :rain_surge do
+    # Periodic swells simulate sudden torrential bursts
+    sleep rrand(4, 8)
+    
+    use_synth :pnoise
+    surge_time = rrand(2, 4)
+    
+    with_fx :lpf, cutoff: rrand(80, 105) do
+      play :c2, attack: surge_time * 0.5, release: surge_time * 0.5, amp: 0 #rrand(1.2, 2.0)
+    end
+  end
+  
+end
